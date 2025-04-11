@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import axios from 'axios';
+import Image from 'next/image';
 
 type Flashcard = {
   question: string;
@@ -66,14 +67,17 @@ export default function Home() {
     <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-100 via-white to-green-100 p-4">
       <div className="w-full max-w-5xl bg-white/90 backdrop-blur-2xl shadow-2xl rounded-3xl p-10 border-4 border-dashed border-orange-300 text-center">
         <div className="mb-6 flex flex-col items-center">
-          <img
-            src="https://images.hindustantimes.com/tech/img/2021/10/22/960x540/f7569ca6-32a3-11ec-a581-90b85644888b_1634879649792_1634879664519.jpg"
-            alt="Modi Ji"
-            className="w-32 h-32 object-cover rounded-full border-4 border-orange-400 shadow-lg"
-          />
+        <Image
+    src="https://images.hindustantimes.com/tech/img/2021/10/22/960x540/f7569ca6-32a3-11ec-a581-90b85644888b_1634879649792_1634879664519.jpg"
+    alt="Modi Ji"
+    width={500} // specify the width
+    height={281} // specify the height
+    className="w-32 h-32 object-cover rounded-full border-4 border-orange-400 shadow-lg"
+  />
+         
           <h1 className="text-4xl font-extrabold text-orange-700 mt-4">ModiBot 🤖</h1>
           <p className="italic text-lg text-gray-700 mt-2">
-            "Main Narendra Modi, aapka digital saathi."
+            `&quot;`Main Narendra Modi, aapka digital saathi.`&quot;`
           </p>
         </div>
 
@@ -130,7 +134,7 @@ export default function Home() {
         )}
 
         <p className="text-center italic mt-12 text-green-700 text-md">
-          "Yuvaon ko nayi soch dena, naye vikalp dikhana... yahi hamara mission hai." – Narendra Modi
+        `&quot;`Yuvaon ko nayi soch dena, naye vikalp dikhana... yahi hamara mission hai.`&quot;` – Narendra Modi
         </p>
       </div>
     </main>
