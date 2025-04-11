@@ -1,103 +1,138 @@
-import Image from "next/image";
+'use client';
+
+import { useState } from 'react';
+import axios from 'axios';
+
+type Flashcard = {
+  question: string;
+  answer: string;
+};
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [inputText, setInputText] = useState('');
+  const [summary, setSummary] = useState('');
+  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
+  const [loadingNotes, setLoadingNotes] = useState(false);
+  const [loadingFlashcards, setLoadingFlashcards] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const generateNotes = async () => {
+    if (!inputText.trim()) return;
+    setLoadingNotes(true);
+    try {
+      const res = await axios.get('/api/user/Notes', {
+        params: { text: inputText },
+      });
+      setSummary(res.data?.message || 'No summary generated.');
+      setFlashcards([]);
+    } catch (error) {
+      console.error(error);
+      setSummary('Error generating summary.');
+    } finally {
+      setLoadingNotes(false);
+    }
+  };
+
+  const generateFlashcards = async () => {
+    if (!summary.trim()) return;
+    setLoadingFlashcards(true);
+    try {
+      const res = await axios.get('/api/user/flashcards', {
+        params: { summary },
+      });
+
+      const raw = res.data?.message || '';
+      const parsed: Flashcard[] = raw
+        .split('Flashcard')
+        .filter((line: string) => line.includes('Q:') && line.includes('A:'))
+        .map((card: string) => {
+          const qMatch = card.match(/Q:\s*(.+?)\n/);
+          const aMatch = card.match(/A:\s*(.+)/);
+          return {
+            question: qMatch?.[1]?.trim() || 'Unknown question',
+            answer: aMatch?.[1]?.trim() || 'Unknown answer',
+          };
+        });
+
+      setFlashcards(parsed);
+    } catch (error) {
+      console.error(error);
+      setFlashcards([]);
+    } finally {
+      setLoadingFlashcards(false);
+    }
+  };
+
+  return (
+    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-100 via-white to-green-100 p-4">
+      <div className="w-full max-w-5xl bg-white/90 backdrop-blur-2xl shadow-2xl rounded-3xl p-10 border-4 border-dashed border-orange-300 text-center">
+        <div className="mb-6 flex flex-col items-center">
+          <img
+            src="https://images.hindustantimes.com/tech/img/2021/10/22/960x540/f7569ca6-32a3-11ec-a581-90b85644888b_1634879649792_1634879664519.jpg"
+            alt="Modi Ji"
+            className="w-32 h-32 object-cover rounded-full border-4 border-orange-400 shadow-lg"
+          />
+          <h1 className="text-4xl font-extrabold text-orange-700 mt-4">ModiBot 🤖</h1>
+          <p className="italic text-lg text-gray-700 mt-2">
+            "Main Narendra Modi, aapka digital saathi."
+          </p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+
+        <textarea
+          spellCheck={false}
+          className="w-full h-52 bg-white/95 p-6 border-2 border-orange-400 rounded-2xl focus:outline-none focus:ring-4 focus:ring-orange-300 transition mb-6 text-gray-800 placeholder:text-orange-500 text-lg shadow-md"
+          placeholder="Desh ke hit mein sawaal pesh kijiye..."
+          value={inputText}
+          onChange={(e) => setInputText(e.target.value)}
+        />
+
+        <button
+          onClick={generateNotes}
+          className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded-xl transition-all mb-8 shadow-md"
+          disabled={loadingNotes}
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+          {loadingNotes ? 'Rashtra ke liye soch raha hoon...' : 'Prashna Poochhiye'}
+        </button>
+
+        <div className="mb-10 text-left">
+          <h2 className="text-2xl font-semibold text-green-800 mb-2">📝 Uttar:</h2>
+          <div className="bg-white p-5 rounded-xl border border-orange-200 whitespace-pre-wrap text-gray-800 shadow-md min-h-[120px]">
+            {summary || 'Abhi tak koi uttar nahi mila hai...'}
+          </div>
+        </div>
+
+        {summary && (
+          <button
+            onClick={generateFlashcards}
+            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl transition mb-10 shadow-md"
+            disabled={loadingFlashcards}
+          >
+            {loadingFlashcards ? 'Sankalan tayar ho raha hai...' : 'Flashcards Prastut Kijiye'}
+          </button>
+        )}
+
+        {flashcards.length > 0 && (
+          <div>
+            <h2 className="text-2xl font-semibold text-center text-orange-600 mb-6">
+              🃏 Flashcards:
+            </h2>
+            <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
+              {flashcards.map((card, index) => (
+                <div
+                  key={index}
+                  className="bg-gradient-to-br from-white via-orange-50 to-green-50 border border-orange-200 rounded-2xl p-5 shadow-lg hover:shadow-2xl transition"
+                >
+                  <p className="font-bold text-orange-700 mb-2">Q: {card.question}</p>
+                  <p className="text-gray-800">A: {card.answer}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <p className="text-center italic mt-12 text-green-700 text-md">
+          "Yuvaon ko nayi soch dena, naye vikalp dikhana... yahi hamara mission hai." – Narendra Modi
+        </p>
+      </div>
+    </main>
   );
 }
