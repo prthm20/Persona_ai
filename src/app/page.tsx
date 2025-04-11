@@ -38,7 +38,7 @@ export default function Home() {
     setLoadingFlashcards(true);
     try {
       const res = await axios.get('/api/user/flashcards', {
-        params: { summary },
+        params: {summary:summary },
       });
 
       const raw = res.data?.message || '';
